@@ -1,6 +1,7 @@
 # RTES Assignment 1
 Repository for the first assignment of CU Boulder's Real Time Embedded Systems course
 
+
 ## Additional Sources
 - [Geeks for Geeks RMS](https://www.geeksforgeeks.org/rate-monotonic-scheduling/)
 
