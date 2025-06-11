@@ -450,3 +450,81 @@ By default the program is running with `CLOCK_MONOTONIC_RAW`.  For a hard realti
 - This is a monotonic clock that counts the number of seconds since boot and is guaranteed to never go backwards/jump
 - This clock is not adjusted by NTP meaning it will keep running at the same rate without being adjusted by external factors
 - This clock is from a raw hardware timer which gives both higher resolution and deterministic timing
+
+> C: Most RTOS vendors brag about three things: 1) Low Interrupt handler latency, 2) Low Context switch time and 3) Stable timer services where interval timer interrupts, timeouts, and knowledge of relative time has low jitter and drift. Why are each important?
+
+1. Low interrupt latency is required in real time systems since interrupts are typically used for timers and I/O and must be serviced immediately.  The lower the interrupt latency, the less the system is spent in interrupt space instead of in the scheduled services.  Higher interrupt latency/processing time could cause the system to become unshedulable and crash.
+2. The scheduler is constantly switching between services meaning it needs the lowest amount of context switching overhead possible.  Having long switching times will introduce latency into the system potentially causing services to miss deadlines or make the system unschedulable.
+3. Since RMP is used in RTOSes and meaning the majority of code is periodic, the accuracy of the timers must be as high as possible to keep these periodic services running properly.  If these timers were either jittery or drift over time the periodic services will become increasingly inaccurate potentially leading to catastrophic results.
+
+> D: Do you believe the accuracy provided by the example RT-Clock code? Why or why not?
+
+Originally I was expecting to believe the accuracy of the RT Clock code but have noticed some interesting behavior.  When I have freshly built the code the average error of each sleep is less than 10,000 nsec but after the next run the average error is jumping up to over 20,000 nsec.  After I clean and rebuild, the first run goes back down to 10,000 nsec.  Since I am using the raw monotonic clock I was expecting it to be extremely consistent but this does not seem to be the case.  I don't believe it is a hardware issue since this occurs after multiple runs of the software and returns back to baseline after a clean rebuild.  This could be a software issue meaning the clock is in fact accurate.  On the order of true timing, this is incredibly accurate and should not be a cause for concern but in a system with hundreds of services, this could accumulate into an issue.  Below is an example of the behavior I'm seeing:
+
+```bash
+// Last 10 tests of my first run after a clean build
+test 90
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008870, sec=0.010008870
+MY_CLOCK delay error = 0, nanoseconds = 8870
+test 91
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008981, sec=0.010008981
+MY_CLOCK delay error = 0, nanoseconds = 8981
+test 92
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008149, sec=0.010008149
+MY_CLOCK delay error = 0, nanoseconds = 8149
+test 93
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008796, sec=0.010008796
+MY_CLOCK delay error = 0, nanoseconds = 8796
+test 94
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008870, sec=0.010008870
+MY_CLOCK delay error = 0, nanoseconds = 8870
+test 95
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008815, sec=0.010008815
+MY_CLOCK delay error = 0, nanoseconds = 8815
+test 96
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008907, sec=0.010008907
+MY_CLOCK delay error = 0, nanoseconds = 8907
+test 97
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008241, sec=0.010008241
+MY_CLOCK delay error = 0, nanoseconds = 8241
+test 98
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008852, sec=0.010008852
+MY_CLOCK delay error = 0, nanoseconds = 8852
+test 99
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10008, nsec=10008889, sec=0.010008889
+MY_CLOCK delay error = 0, nanoseconds = 8889
+TEST COMPLETE
+
+// Last 10 tests of my second run after a clean build
+test 90
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022630, sec=0.010022630
+MY_CLOCK delay error = 0, nanoseconds = 22630
+test 91
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022408, sec=0.010022408
+MY_CLOCK delay error = 0, nanoseconds = 22408
+test 92
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022538, sec=0.010022538
+MY_CLOCK delay error = 0, nanoseconds = 22538
+test 93
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022444, sec=0.010022444
+MY_CLOCK delay error = 0, nanoseconds = 22444
+test 94
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10023, nsec=10023037, sec=0.010023037
+MY_CLOCK delay error = 0, nanoseconds = 23037
+test 95
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10032, nsec=10032704, sec=0.010032704
+MY_CLOCK delay error = 0, nanoseconds = 32704
+test 96
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10023, nsec=10023203, sec=0.010023203
+MY_CLOCK delay error = 0, nanoseconds = 23203
+test 97
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022500, sec=0.010022500
+MY_CLOCK delay error = 0, nanoseconds = 22500
+test 98
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022741, sec=0.010022741
+MY_CLOCK delay error = 0, nanoseconds = 22741
+test 99
+MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022685, sec=0.010022685
+MY_CLOCK delay error = 0, nanoseconds = 22685
+TEST COMPLETE
+```
