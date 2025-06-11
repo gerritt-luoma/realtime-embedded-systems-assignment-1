@@ -41,7 +41,7 @@ Where:
 For the current set of services the total CPU usage is:
 
 $$
-U = \frac{1}{3} + \frac{2}{5} + \frac{3}{15} = 0.933 = 93.33\%
+U = \frac{1}{3} + \frac{2}{5} + \frac{3}{15} = 0.933 = 93.33\\%
 $$
 
 A simple check to perform a baseline validation of the safety of the services is to calulate the LUB of the services.  The LUB can be calculated with:
@@ -56,7 +56,7 @@ Where:
 For the current set of services the LUB is:
 
 $$
-U_{\text{max}} = 3(2^{1/3} - 1) \approx 0.78 \approx 78\%
+U_{\text{max}} = 3(2^{1/3} - 1) \approx 0.78 \approx 78\\%
 $$
 
 To guarantee a system is schedulable under RMP the total CPU time must be less than or equal to the LUB otherwise additional verification is required.  In the case of these services, it is not guaranteed to be shedulable due to the total CPU usage being greater than the LUB.
