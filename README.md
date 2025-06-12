@@ -528,3 +528,264 @@ MY_CLOCK clock DT seconds = 0, msec=10, usec=10022, nsec=10022685, sec=0.0100226
 MY_CLOCK delay error = 0, nanoseconds = 22685
 TEST COMPLETE
 ```
+
+## Problem 4
+
+> This is a challenging problem that requires you to learn quite a bit about Pthreads in Linux and to implement a schedule that is predictable.
+
+> A: Download, build and run code in Linux/simplethread/ and describe how it works and what it does and compare it to Linux/simplethread-affinity.
+
+First, let's compare the output of each of the programs.
+
+```bash
+// Simple Thread Output
+Thread idx=0, sum[0...0]=0
+Thread idx=1, sum[0...1]=1
+Thread idx=2, sum[0...2]=3
+Thread idx=5, sum[0...5]=15
+Thread idx=6, sum[0...6]=21
+Thread idx=7, sum[0...7]=28
+Thread idx=4, sum[0...4]=10
+Thread idx=3, sum[0...3]=6
+Thread idx=8, sum[0...8]=36
+Thread idx=9, sum[0...9]=45
+Thread idx=10, sum[0...10]=55
+Thread idx=11, sum[0...11]=66
+TEST COMPLETE
+```
+
+```bash
+// Simple Thread Affinity Output
+INITIAL Pthread policy is SCHED_OTHER
+ADJUSTED Pthread policy is SCHED_FIFO
+main thread running on CPU=1, CPUs = 0 1 2 3
+starter thread running on CPU=3
+
+Thread idx=0, sum[0...0]=0, running on CPU=3, start=1749768864.208045, stop=1749768864.218633
+Thread idx=1, sum[0...1]=1, running on CPU=3, start=1749768864.218992, stop=1749768864.239580
+Thread idx=2, sum[0...2]=3, running on CPU=3, start=1749768864.239696, stop=1749768864.263082
+Thread idx=3, sum[0...3]=6, running on CPU=3, start=1749768864.263168, stop=1749768864.295444
+Thread idx=4, sum[0...4]=10, running on CPU=3, start=1749768864.295593, stop=1749768864.335513
+Thread idx=5, sum[0...5]=15, running on CPU=3, start=1749768864.335571, stop=1749768864.360594
+Thread idx=6, sum[0...6]=21, running on CPU=3, start=1749768864.360632, stop=1749768864.390103
+Thread idx=7, sum[0...7]=28, running on CPU=3, start=1749768864.390152, stop=1749768864.424067
+Thread idx=8, sum[0...8]=36, running on CPU=3, start=1749768864.424111, stop=1749768864.462471
+Thread idx=9, sum[0...9]=45, running on CPU=3, start=1749768864.462525, stop=1749768864.505334
+Thread idx=10, sum[0...10]=55, running on CPU=3, start=1749768864.505380, stop=1749768864.552635
+Thread idx=11, sum[0...11]=66, running on CPU=3, start=1749768864.552680, stop=1749768864.604385
+Thread idx=12, sum[0...12]=78, running on CPU=3, start=1749768864.604431, stop=1749768864.660597
+Thread idx=13, sum[0...13]=91, running on CPU=3, start=1749768864.660649, stop=1749768864.721265
+Thread idx=14, sum[0...14]=105, running on CPU=3, start=1749768864.721323, stop=1749768864.786393
+Thread idx=15, sum[0...15]=120, running on CPU=3, start=1749768864.786441, stop=1749768864.855946
+Thread idx=16, sum[0...16]=136, running on CPU=3, start=1749768864.855991, stop=1749768864.929934
+Thread idx=17, sum[0...17]=153, running on CPU=3, start=1749768864.929981, stop=1749768865.008371
+Thread idx=18, sum[0...18]=171, running on CPU=3, start=1749768865.008416, stop=1749768865.091256
+Thread idx=19, sum[0...19]=190, running on CPU=3, start=1749768865.091301, stop=1749768865.178688
+Thread idx=20, sum[0...20]=210, running on CPU=3, start=1749768865.178768, stop=1749768865.270498
+Thread idx=21, sum[0...21]=231, running on CPU=3, start=1749768865.270565, stop=1749768865.366741
+Thread idx=22, sum[0...22]=253, running on CPU=3, start=1749768865.366803, stop=1749768865.467433
+Thread idx=23, sum[0...23]=276, running on CPU=3, start=1749768865.467497, stop=1749768865.572568
+Thread idx=24, sum[0...24]=300, running on CPU=3, start=1749768865.572630, stop=1749768865.682150
+Thread idx=25, sum[0...25]=325, running on CPU=3, start=1749768865.682213, stop=1749768865.796182
+Thread idx=26, sum[0...26]=351, running on CPU=3, start=1749768865.796243, stop=1749768865.914708
+Thread idx=27, sum[0...27]=378, running on CPU=3, start=1749768865.914773, stop=1749768866.037641
+Thread idx=28, sum[0...28]=406, running on CPU=3, start=1749768866.037704, stop=1749768866.165058
+Thread idx=29, sum[0...29]=435, running on CPU=3, start=1749768866.165132, stop=1749768866.296975
+Thread idx=30, sum[0...30]=465, running on CPU=3, start=1749768866.297045, stop=1749768866.433290
+Thread idx=31, sum[0...31]=496, running on CPU=3, start=1749768866.433358, stop=1749768866.574028
+Thread idx=32, sum[0...32]=528, running on CPU=3, start=1749768866.574136, stop=1749768866.733837
+Thread idx=33, sum[0...33]=561, running on CPU=3, start=1749768866.733907, stop=1749768866.898469
+Thread idx=34, sum[0...34]=595, running on CPU=3, start=1749768866.898540, stop=1749768867.067022
+Thread idx=35, sum[0...35]=630, running on CPU=3, start=1749768867.067149, stop=1749768867.240130
+Thread idx=36, sum[0...36]=666, running on CPU=3, start=1749768867.240213, stop=1749768867.418128
+Thread idx=37, sum[0...37]=703, running on CPU=3, start=1749768867.418249, stop=1749768867.600605
+Thread idx=38, sum[0...38]=741, running on CPU=3, start=1749768867.600694, stop=1749768867.786936
+Thread idx=39, sum[0...39]=780, running on CPU=3, start=1749768867.787001, stop=1749768867.977743
+Thread idx=40, sum[0...40]=820, running on CPU=3, start=1749768867.977813, stop=1749768868.173507
+Thread idx=41, sum[0...41]=861, running on CPU=3, start=1749768868.173583, stop=1749768868.373844
+Thread idx=42, sum[0...42]=903, running on CPU=3, start=1749768868.373930, stop=1749768868.577969
+Thread idx=43, sum[0...43]=946, running on CPU=3, start=1749768868.578040, stop=1749768868.786532
+Thread idx=44, sum[0...44]=990, running on CPU=3, start=1749768868.786602, stop=1749768869.000138
+Thread idx=45, sum[0...45]=1035, running on CPU=3, start=1749768869.000203, stop=1749768869.218145
+Thread idx=46, sum[0...46]=1081, running on CPU=3, start=1749768869.218241, stop=1749768869.440181
+Thread idx=47, sum[0...47]=1128, running on CPU=3, start=1749768869.440289, stop=1749768869.666648
+Thread idx=48, sum[0...48]=1176, running on CPU=3, start=1749768869.666756, stop=1749768869.898041
+Thread idx=49, sum[0...49]=1225, running on CPU=3, start=1749768869.898148, stop=1749768870.133958
+Thread idx=50, sum[0...50]=1275, running on CPU=3, start=1749768870.134099, stop=1749768870.373829
+Thread idx=51, sum[0...51]=1326, running on CPU=3, start=1749768870.373961, stop=1749768870.618036
+Thread idx=52, sum[0...52]=1378, running on CPU=3, start=1749768870.618129, stop=1749768870.867198
+Thread idx=53, sum[0...53]=1431, running on CPU=3, start=1749768870.867271, stop=1749768871.120817
+Thread idx=54, sum[0...54]=1485, running on CPU=3, start=1749768871.120905, stop=1749768871.378379
+Thread idx=55, sum[0...55]=1540, running on CPU=3, start=1749768871.378452, stop=1749768871.640314
+Thread idx=56, sum[0...56]=1596, running on CPU=3, start=1749768871.640398, stop=1749768871.907281
+Thread idx=57, sum[0...57]=1653, running on CPU=3, start=1749768871.907374, stop=1749768872.178723
+Thread idx=58, sum[0...58]=1711, running on CPU=3, start=1749768872.178800, stop=1749768872.454067
+Thread idx=59, sum[0...59]=1770, running on CPU=3, start=1749768872.454140, stop=1749768872.733783
+Thread idx=60, sum[0...60]=1830, running on CPU=3, start=1749768872.733884, stop=1749768873.018564
+Thread idx=61, sum[0...61]=1891, running on CPU=3, start=1749768873.018704, stop=1749768873.307809
+Thread idx=62, sum[0...62]=1953, running on CPU=3, start=1749768873.307941, stop=1749768873.601291
+Thread idx=63, sum[0...63]=2016, running on CPU=3, start=1749768873.601394, stop=1749768873.898901
+TEST COMPLETE
+```
+
+It appears that both of the programs are spawning threads that are iterating a specified amount of times and summing all of the natural numbers from 0..N of the current iteration.  `simplethread` is iterating only 12 times while `simplethread-afinity` is iterating 64 times. Besides the output of each iteration, `simplethread` provides no extra value.  `simplethread-afinity` provides additional information regarding the scheduling policy, available CPUs, and the CPU that each thread is running on.  It appears that for this run, the main thread ran on CPU 1, the starter thread ran on CPU 3, and each of the counting threads ran on CPU 3.
+
+When looking at the code for `simplethread`, it is making no alterations to the scheduling policy or the attributes of the threads.  It simply uses `pthread_create` to spawn in `NUM_THREADS` pthreads with their specified number of iterations to perform and then joins them together as seen below:
+
+```c
+int main (int argc, char *argv[])
+{
+   int rc;
+   int i;
+
+   for(i=0; i < NUM_THREADS; i++)
+   {
+       threadParams[i].threadIdx=i;
+
+       pthread_create(&threads[i],   // pointer to thread descriptor
+                      (void *)0,     // use default attributes
+                      counterThread, // thread function entry point
+                      (void *)&(threadParams[i]) // parameters to pass in
+                     );
+
+   }
+
+   for(i=0;i<NUM_THREADS;i++)
+       pthread_join(threads[i], NULL);
+
+   printf("TEST COMPLETE\n");
+}
+```
+
+`simplethread-affinity` is doing essentially the same procedure with a little bit of extra processing before.  First, the program calls the `set_scheduler()` function, seen below, to perform initialization of pthread attributes struct.  In this function it explicitly sets the scheduler to `FIFO` using the the `pthread_attr_setinheritsched()` and `pthread_attr_setschedpolicy()` functions.  After this, it uses the `CPU_ZERO` macro made available by defining `_GNU_SOURCE` to zero out a `cpu_set_t` struct before setting the available CPU index to 3.  After retrieving the maximum priotity of the `FIFO` policy, the scheduler of the current program is updated and the function ends.
+
+```c
+void set_scheduler(void)
+{
+    int max_prio, scope, rc, cpuidx;
+    cpu_set_t cpuset;
+
+    printf("INITIAL "); print_scheduler();
+
+    pthread_attr_init(&fifo_sched_attr);
+    pthread_attr_setinheritsched(&fifo_sched_attr, PTHREAD_EXPLICIT_SCHED);
+    pthread_attr_setschedpolicy(&fifo_sched_attr, SCHED_POLICY);
+    CPU_ZERO(&cpuset);
+    cpuidx=(3);
+    CPU_SET(cpuidx, &cpuset);
+    pthread_attr_setaffinity_np(&fifo_sched_attr, sizeof(cpu_set_t), &cpuset);
+
+    max_prio=sched_get_priority_max(SCHED_POLICY);
+    fifo_param.sched_priority=max_prio;    
+
+    if((rc=sched_setscheduler(getpid(), SCHED_POLICY, &fifo_param)) < 0)
+        perror("sched_setscheduler");
+
+    pthread_attr_setschedparam(&fifo_sched_attr, &fifo_param);
+
+    printf("ADJUSTED "); print_scheduler();
+}
+```
+
+The main thread then gets the thread affinity of the main thread using `pthread_get_affinity_np()` and confirms it was successful before printing out the CPU the main thread is running on and the available CPUs the thread could have ran on.  Finally, the main thread creates a pthread calling the `starterThread()` function with the scheduler attributes configured during `set_scheduler()` and then joins on the thread.  The full main function can be seen below:
+
+```c
+int main (int argc, char *argv[])
+{
+   int rc;
+   int i, j;
+   cpu_set_t cpuset;
+
+   set_scheduler();
+
+   CPU_ZERO(&cpuset);
+
+   // get affinity set for main thread
+   mainthread = pthread_self();
+
+   // Check the affinity mask assigned to the thread 
+   rc = pthread_getaffinity_np(mainthread, sizeof(cpu_set_t), &cpuset);
+   if (rc != 0)
+       perror("pthread_getaffinity_np");
+   else
+   {
+       printf("main thread running on CPU=%d, CPUs =", sched_getcpu());
+
+       for (j = 0; j < CPU_SETSIZE; j++)
+           if (CPU_ISSET(j, &cpuset))
+               printf(" %d", j);
+
+       printf("\n");
+   }
+
+   pthread_create(&startthread,   // pointer to thread descriptor
+                  &fifo_sched_attr,     // use FIFO RT max priority attributes
+                  starterThread, // thread function entry point
+                  (void *)0 // parameters to pass in
+                 );
+
+   pthread_join(startthread, NULL);
+
+   printf("\nTEST COMPLETE\n");
+}
+```
+
+The `starterThread()` function simply outputs the CPU it is running on before creating `NUM_THREADS` pthreads with the same configured scheduler attributes from `set_scheduler()` and joins on those threads.  This function can be seen below:
+
+```c
+void *starterThread(void *threadp)
+{
+   int i, rc;
+
+   printf("starter thread running on CPU=%d\n", sched_getcpu());
+
+   for(i=0; i < NUM_THREADS; i++)
+   {
+       threadParams[i].threadIdx=i;
+
+       pthread_create(&threads[i],   // pointer to thread descriptor
+                      &fifo_sched_attr,     // use FIFO RT max priority attributes
+                      counterThread, // thread function entry point
+                      (void *)&(threadParams[i]) // parameters to pass in
+                     );
+
+   }
+
+   for(i=0;i<NUM_THREADS;i++)
+       pthread_join(threads[i], NULL);
+
+}
+```
+
+To make the timing more obvious compared to the `simplethread` example, the counter thread will perform the summation a total of `MAX_ITERATION` times and times the duration using the `gettimeofday()` function before printing the thread ID, sum, CPU it ran on, and timing information.  Each of the threads are running on CPU #3 because it was selected in the scheduler attributes.  The counter thread can be seen below:
+
+```c
+void *counterThread(void *threadp)
+{
+    int sum=0, i, rc, iterations;
+    threadParams_t *threadParams = (threadParams_t *)threadp;
+    pthread_t mythread;
+    double start=0.0, stop=0.0;
+    struct timeval startTime, stopTime;
+
+    gettimeofday(&startTime, 0);
+    start = ((startTime.tv_sec * 1000000.0) + startTime.tv_usec)/1000000.0;
+
+
+    for(iterations=0; iterations < MAX_ITERATIONS; iterations++)
+    {
+        sum=0;
+        for(i=1; i < (threadParams->threadIdx)+1; i++)
+            sum=sum+i;
+    }
+
+
+    gettimeofday(&stopTime, 0);
+    stop = ((stopTime.tv_sec * 1000000.0) + stopTime.tv_usec)/1000000.0;
+
+    printf("\nThread idx=%d, sum[0...%d]=%d, running on CPU=%d, start=%lf, stop=%lf",
+           threadParams->threadIdx,
+           threadParams->threadIdx, sum, sched_getcpu(),
+           start, stop);
+}
+```
