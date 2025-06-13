@@ -205,6 +205,10 @@ int main (int argc, char *argv[])
     sequencePeriods = 2000;
     // Sequencer = RT_MAX	@ 100 Hz
     //
+    struct sigevent sev;
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIGALRM;
+    sev.sigev_value.sival_ptr = &scheduler_timer;
     /* set up to signal SIGALRM if timer expires */
     timer_create(CLOCK_MONOTONIC_RAW, NULL, &scheduler_timer);
 
