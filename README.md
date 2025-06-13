@@ -790,7 +790,7 @@ void *counterThread(void *threadp)
 }
 ```
 
-> Download and run the examples for creation of 2 threads provided by incdecthread, as well as Linux/simplethread-affinity-fifo. Describe POSIX API functions used by reading POSIX manual pages as needed and commenting your version of this code. Note that this starter example code - testdigest.c is an example that makes use of and sem_post and sem_wait and you can use semaphores to synchronize the increment/decrement and other concurrent threading code. Try to make the increment/decrement deterministic (always in the same order). You can make thread execution deterministic two ways – by using SCHED_FIFO priorities or by using semaphores. Try both and compare methods to make the order deterministic and compare your results.
+> B: Download and run the examples for creation of 2 threads provided by incdecthread, as well as Linux/simplethread-affinity-fifo. Describe POSIX API functions used by reading POSIX manual pages as needed and commenting your version of this code. Note that this starter example code - testdigest.c is an example that makes use of and sem_post and sem_wait and you can use semaphores to synchronize the increment/decrement and other concurrent threading code. Try to make the increment/decrement deterministic (always in the same order). You can make thread execution deterministic two ways – by using SCHED_FIFO priorities or by using semaphores. Try both and compare methods to make the order deterministic and compare your results.
 
 Pthread functions used by the provided examples:
 - `pthread_create()`
@@ -841,3 +841,47 @@ $ diff incdecthread-priorities/priorities-output.txt incdecthread-semaphore/sema
 $ echo $?
 0 // Zero means no diff has been found
 ```
+
+> C: Download this SCHED_DEADLINE code and modify the code so that it can use SCHED_DEADLINE or SCHED_FIFO and add a POSIX clock time print out. Run the code with both policies and note any differences you see.
+
+In order to be able to run wither either scheduling policies I defined a value called `CURRENT_POLICY` that can be set to either `SCHED_DEADLINE` or `SCHED_FIFO`.  I also used `clock_gettime()` on `CLOCK_MONOTONIC` each iteration of the for loop to print out the decimal value of the monotonic clock.
+
+The difference between the two schedules is that `SCHED_DEADLINE` allows you to define a runtime, period, and deadline for the thread.  With this, the thread is able to run at a reliable 0.5Hz or once ever 2 seconds as seen in the output below:
+
+```bash
+Current monotonic time: 392996.727310250
+Current monotonic time: 392998.727262933
+Current monotonic time: 393000.727271375
+Current monotonic time: 393002.727251577
+Current monotonic time: 393004.727233020
+Current monotonic time: 393006.727208666
+Current monotonic time: 393008.727180535
+```
+
+Whereas `SCHED_FIFO` will run as fast as possible because the settings used by `SCHED_DEADLINE` don't apply to `SCHED_FIFO` meaning to get the same behavior you will need to manually implement task delays for the desired period.  The output of `SCHED_FIFO` running as fast as possible can be seen below:
+
+```bash
+Current monotonic time: 392886.246575559
+Current monotonic time: 392886.246588893
+Current monotonic time: 392886.246608281
+Current monotonic time: 392886.246624059
+Current monotonic time: 392886.246642633
+Current monotonic time: 392886.246656373
+Current monotonic time: 392886.246675410
+Current monotonic time: 392886.246691947
+Current monotonic time: 392886.246711132
+Current monotonic time: 392886.246724391
+Current monotonic time: 392886.246743761
+Current monotonic time: 392886.246758280
+Current monotonic time: 392886.246777057
+Current monotonic time: 392886.246798613
+Current monotonic time: 392886.246818594
+Current monotonic time: 392886.246832705
+Current monotonic time: 392886.246851501
+Current monotonic time: 392886.246864834
+Current monotonic time: 392886.246883593
+Current monotonic time: 392886.246896556
+Current monotonic time: 392886.246915296
+Current monotonic time: 392886.246928352
+```
+
