@@ -18,6 +18,8 @@
 #include <signal.h>
 
 #define NS_PER_MSEC (1000 * 1000)
+// Reduce runtime of both threads to give overhead for all of the clock gettimes
+// and prints to syslog
 #define F10_WAIT_NS (10 * NS_PER_MSEC - 100000)
 #define F20_WAIT_NS (20 * NS_PER_MSEC - 100000)
 
@@ -59,7 +61,7 @@ void *f10(void *threadp)
         sem_wait(&sem_f10);
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_start);
         dtime = ((double)(time_start.tv_sec) + ((double)(time_start.tv_nsec) / 1000000000.0));
-        printf("[%6.9lf] f10: Task start\n", dtime);
+        syslog(LOG_CRIT, "[%6.9lf] f10: Task start\n", dtime);
         elapsed_ns = 0;
 
         // Get the CPU time consumed by this thread to time thread consumption
@@ -75,7 +77,7 @@ void *f10(void *threadp)
 
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
-        printf("[%6.9lf] f10: Task ended after consuming %lluns of CPU time\n", dtime, elapsed_ns);
+        syslog(LOG_CRIT, "[%6.9lf] f10: Task end\n", dtime, elapsed_ns);
     }
 
     pthread_exit((void *)0);
@@ -94,7 +96,7 @@ void *f20(void *threadp)
         sem_wait(&sem_f20);
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_start);
         dtime = ((double)(time_start.tv_sec) + ((double)(time_start.tv_nsec) / 1000000000.0));
-        printf("[%6.9lf] f20: Task start\n", dtime);
+        syslog(LOG_CRIT, "[%6.9lf] f20: Task start\n", dtime);
         elapsed_ns = 0;
 
         // Get the CPU time consumed by this thread to time thread consumption
@@ -110,7 +112,7 @@ void *f20(void *threadp)
 
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
-        printf("[%6.9lf] f20: Task endded after consuming %lluns of CPU time\n", dtime, elapsed_ns);
+        syslog(LOG_CRIT, "[%6.9lf] f20: Task end\n", dtime, elapsed_ns);
     }
 
     pthread_exit((void *)0);
@@ -203,19 +205,21 @@ int main (int argc, char *argv[])
                       );
     }
 
+    // Sleep to give both threads time to initialize
     sleep(1);
+
     printf("Starting timer\n");
     // Let it run for 5 seconds
     sequencePeriods = 500;
+
     // Sequencer = RT_MAX	@ 100 Hz
-    //
     struct sigevent sev;
     sev.sigev_notify = SIGEV_SIGNAL;
     sev.sigev_signo = SIGALRM;
     sev.sigev_value.sival_ptr = &scheduler_timer;
+
     /* set up to signal SIGALRM if timer expires */
     timer_create(CLOCK_MONOTONIC, &sev, &scheduler_timer);
-
     signal(SIGALRM, (void(*)()) Sequencer);
 
 
