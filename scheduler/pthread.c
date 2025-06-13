@@ -53,6 +53,7 @@ void *f10(void *threadp)
     uint64_t elapsed_ns = 0;
     double dtime;
 
+    printf("f10 started\n");
     while (!abort_f10)
     {
         sem_wait(&sem_f10);
@@ -85,6 +86,7 @@ void *f20(void *threadp)
     uint64_t elapsed_ns = 0;
     double dtime;
 
+    printf("f20 started\n");
     while (!abort_f20)
     {
         sem_wait(&sem_f20);
@@ -112,6 +114,7 @@ void *f20(void *threadp)
 
 void Sequencer(int id)
 {
+    printf("Sequencer called\n");
     struct timespec current_time;
     double current_realtime;
     int rc, flags = 0;
@@ -197,6 +200,7 @@ int main (int argc, char *argv[])
                       );
     }
 
+    printf("Starting timer\n");
     // Let it run for 20 seconds
     sequencePeriods = 2000;
     // Sequencer = RT_MAX	@ 100 Hz
