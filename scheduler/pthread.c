@@ -210,7 +210,7 @@ int main (int argc, char *argv[])
     sev.sigev_signo = SIGALRM;
     sev.sigev_value.sival_ptr = &scheduler_timer;
     /* set up to signal SIGALRM if timer expires */
-    timer_create(CLOCK_MONOTONIC_RAW, NULL, &scheduler_timer);
+    timer_create(CLOCK_MONOTONIC_RAW, &sev, &scheduler_timer);
 
     signal(SIGALRM, (void(*)()) Sequencer);
 
