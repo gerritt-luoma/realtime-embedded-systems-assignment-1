@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <pthread.h>
 #include <sched.h>
@@ -24,7 +25,8 @@ static timer_t scheduler_timer;
 static struct itimerspec itime = {{1,0}, {1,0}};
 static struct itimerspec last_itime;
 
-static unsigned long long seqCnt=0;
+static uint64_t seqCnt=0;
+static uint64_t sequencePeriods;
 
 typedef struct
 {
@@ -195,6 +197,8 @@ int main (int argc, char *argv[])
                       );
     }
 
+    // Let it run for 20 seconds
+    sequencePeriods = 2000;
     // Sequencer = RT_MAX	@ 100 Hz
     //
     /* set up to signal SIGALRM if timer expires */
