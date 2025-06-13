@@ -51,7 +51,7 @@ void * threadA(void *p)
     for (;;) 
     {
         clock_gettime(CLOCK_MONOTONIC, &time_now);
-        dtime = ((double)(time_now->tv_sec) + ((double)(time_now->tv_nsec) / 1000000000.0));
+        dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
         printf("Current monotonic time: %6.9lf\n", dtime);
         fflush(0);
         sched_yield();
