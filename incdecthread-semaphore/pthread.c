@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <semaphore.h>
 #include <sched.h>
 
 #define COUNT  1000
@@ -15,6 +16,7 @@ typedef struct
 //
 pthread_t threads[2];
 threadParams_t threadParams[2];
+sem_t inc_done_sem;
 
 
 // Unsafe global
@@ -30,11 +32,13 @@ void *incThread(void *threadp)
         gsum=gsum+i;
         printf("Increment thread idx=%d, gsum=%d\n", threadParams->threadIdx, gsum);
     }
+    sem_post(&inc_done_sem);
 }
 
 
 void *decThread(void *threadp)
 {
+    sem_wait(&inc_done_sem);
     int i;
     threadParams_t *threadParams = (threadParams_t *)threadp;
 
@@ -45,13 +49,16 @@ void *decThread(void *threadp)
     }
 }
 
-
-
-
 int main (int argc, char *argv[])
 {
    int rc;
    int i=0;
+
+   if (sem_init(&inc_done_sem, 0, 0))
+   {
+        printf("Failed to init semaphore\n");
+        exit(-1);
+   }
 
    threadParams[i].threadIdx=i;
    pthread_create(&threads[i],   // pointer to thread descriptor
