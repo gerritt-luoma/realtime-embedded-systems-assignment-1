@@ -57,12 +57,14 @@ void *f10(void *threadp)
     while (!abort_f10)
     {
         sem_wait(&sem_f10);
-        elapsed_ns = 0;
-
-        // Get the CPU time consumed by this thread
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &time_start);
         dtime = ((double)(time_start.tv_sec) + ((double)(time_start.tv_nsec) / 1000000000.0));
         printf("[%6.9lf] f10: Task start\n", dtime);
+        elapsed_ns = 0;
+
+        // Get the CPU time consumed by this thread to time thread consumption
+        // in case of preemption
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
         while (elapsed_ns < F10_WAIT_NS)
         {
             // Update time
@@ -71,7 +73,7 @@ void *f10(void *threadp)
             (time_now.tv_nsec - time_start.tv_nsec);
         }
 
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
         printf("[%6.9lf] f10: Task end\n", dtime);
     }
@@ -90,12 +92,14 @@ void *f20(void *threadp)
     while (!abort_f20)
     {
         sem_wait(&sem_f20);
-        elapsed_ns = 0;
-
-        // Get the CPU time consumed by this thread
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &time_start);
         dtime = ((double)(time_start.tv_sec) + ((double)(time_start.tv_nsec) / 1000000000.0));
         printf("[%6.9lf] f20: Task start\n", dtime);
+        elapsed_ns = 0;
+
+        // Get the CPU time consumed by this thread to time thread consumption
+        // in case of preemption
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
         while (elapsed_ns < F20_WAIT_NS)
         {
             // Update time
@@ -104,7 +108,7 @@ void *f20(void *threadp)
             (time_now.tv_nsec - time_start.tv_nsec);
         }
 
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
         printf("[%6.9lf] f20: Task end\n", dtime);
     }
