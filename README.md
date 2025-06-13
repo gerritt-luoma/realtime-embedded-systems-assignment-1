@@ -818,3 +818,26 @@ Pthread functions used by the provided examples:
   - Is used to set the sheduling policy and scheduling params of the selected PID.  If the PID is 0, the scheduling policy and params of the calling thread are set instead.
 - `pthread_attr_setschedparam()`
   - Is used to set the scheduling attributes of the input `pthread_attr_t` using the input `struct sched_param` buffer
+
+I have created two new directories which are starting as direct copies of the `incdecthread` directory.  The first is `incdecthread-priorities` which I will use to rewrite the program to use priorities and the `SCHED_FIFO` policy to make the operations deterministic.  The second is `incdecthread-semaphore` which I will use to rewrite the program to instead use semaphores to make the operations deterministic.
+
+- Changes needed for `indecthread-priorities`
+  - To be safe I updated the scheduling policy of the main thread to `SCHED_FIFO` and to have the max priority of sched fifo
+  - For both the inc thread and the dec thread I:
+    - Set the thread attributes to explicit
+    - Set the policy to FIFO
+    - Set the CPU afinity max to only use CPU 3.  The reason for this is that if they can run on multiple CPUs at the same time it will remain non-deterministic
+    - Set the thread priority (80 for inc, 70 for dec) so that the inc thread will always have the higher priority and run first
+    - Create the thread
+- Changes needed for `incdecthread-semaphore`
+  - Initialized a global `inc_done_sem` semaphore at the start of main
+  - Added a `sem_wait` on the semaphore at the top of the `decThread()` making it wait until another thread posts on the semaphore allowing it to run
+  - Added a `sem_post` on the semaphore at the end of the `incThread()` so that the dec thread can begin processing
+
+I have captured the standard outputs of both `incdecthread-semaphore` and `incdecthread-priorities` in their own text files found within their run directories.  I then ran the `diff` command between both outputs which is finding no differences.
+
+```bash
+$ diff incdecthread-priorities/priorities-output.txt incdecthread-semaphore/semaphore-output.txt
+$ echo $?
+0 // Zero means no diff has been found
+```
