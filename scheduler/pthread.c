@@ -65,7 +65,7 @@ void *f10(void *threadp)
         // Get the CPU time consumed by this thread to time thread consumption
         // in case of preemption
         clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
-        while (elapsed_ns < F10_WAIT_NS)
+        while (elapsed_ns < (F10_WAIT_NS - 1000))
         {
             // Update time
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
@@ -75,7 +75,7 @@ void *f10(void *threadp)
 
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
-        printf("[%6.9lf] f10: Task end\n", dtime);
+        printf("[%6.9lf] f10: Task ended after consuming %lluns of CPU time\n", dtime, elapsed_ns);
     }
 
     pthread_exit((void *)0);
@@ -100,7 +100,7 @@ void *f20(void *threadp)
         // Get the CPU time consumed by this thread to time thread consumption
         // in case of preemption
         clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
-        while (elapsed_ns < F20_WAIT_NS)
+        while (elapsed_ns < (F20_WAIT_NS - 1000))
         {
             // Update time
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
@@ -110,7 +110,7 @@ void *f20(void *threadp)
 
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
-        printf("[%6.9lf] f20: Task end\n", dtime);
+        printf("[%6.9lf] f20: Task endded after consuming %lluns of CPU time\n", dtime, elapsed_ns);
     }
 
     pthread_exit((void *)0);
