@@ -20,8 +20,8 @@
 #define NS_PER_MSEC (1000 * 1000)
 // Reduce runtime of both threads to give overhead for all of the clock gettimes
 // and prints to syslog
-#define F10_WAIT_NS (10 * NS_PER_MSEC - 100000)
-#define F20_WAIT_NS (20 * NS_PER_MSEC - 100000)
+#define F10_WAIT_NS (10 * NS_PER_MSEC - 150000)
+#define F20_WAIT_NS (20 * NS_PER_MSEC - 150000)
 
 static timer_t scheduler_timer;
 static struct itimerspec itime = {{1,0}, {1,0}};
