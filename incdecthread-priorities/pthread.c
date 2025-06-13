@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -52,8 +53,9 @@ void *decThread(void *threadp)
 
 int main (int argc, char *argv[])
 {
-   int rc;
+   int rc, cpuidx;
    int i=0;
+   cpu_set_t cpuset;
    struct sched_param mainParam;
    mainParam.sched_priority = sched_get_priority_max(SCHED_FIFO);
    if (0 != sched_setscheduler(0, SCHED_FIFO, &mainParam))
@@ -67,6 +69,10 @@ int main (int argc, char *argv[])
         pthread_attr_init(&threadAttrs[i]);
         pthread_attr_setinheritsched(&threadAttrs[i], PTHREAD_EXPLICIT_SCHED);
         pthread_attr_setschedpolicy(&threadAttrs[i], SCHED_FIFO);
+        CPU_ZERO(&cpuset);
+        cpuidx=(3);
+        CPU_SET(cpuidx, &cpuset);
+        pthread_attr_setaffinity_np(&threadAttrs[i], sizeof(cpu_set_t), &cpuset);
 
         schedparams[i].sched_priority = (i == 0) ? 80 : 70; // incThread > decThread
         pthread_attr_setschedparam(&threadAttrs[i], &schedparams[i]);
@@ -84,7 +90,7 @@ int main (int argc, char *argv[])
 
    threadParams[i].threadIdx=i;
    pthread_create(&threads[i],
-                  &threadAttrs,
+                  &threadAttrs[i],
                   decThread,
                   (void *)&(threadParams[i])
                 );
