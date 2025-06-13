@@ -78,25 +78,16 @@ int main (int argc, char *argv[])
         pthread_attr_setschedparam(&threadAttrs[i], &schedparams[i]);
 
         threadParams[i].threadIdx = i;
+        pthread_create(&threads[i],                       // pointer to thread descriptor
+                        &threadAttrs[i],                  // use default attributes
+                        (i == 0) ? incThread : decThread, // thread function entry point
+                        (void *)&(threadParams[i])        // parameters to pass in
+                      );
     }
 
-   threadParams[i].threadIdx=i;
-   pthread_create(&threads[i],               // pointer to thread descriptor
-                  &threadAttrs[i],           // use default attributes
-                  incThread,                 // thread function entry point
-                  (void *)&(threadParams[i]) // parameters to pass in
-                 );
-   i++;
 
-   threadParams[i].threadIdx=i;
-   pthread_create(&threads[i],
-                  &threadAttrs[i],
-                  decThread,
-                  (void *)&(threadParams[i])
-                );
-
-   for(i=0; i<2; i++)
-     pthread_join(threads[i], NULL);
+    for(i=0; i<2; i++)
+        pthread_join(threads[i], NULL);
 
    printf("TEST COMPLETE\n");
 }
