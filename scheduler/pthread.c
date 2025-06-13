@@ -20,7 +20,7 @@
 #define NS_PER_MSEC (1000 * 1000)
 // Reduce runtime of both threads to give overhead for all of the clock gettimes
 // and prints to syslog
-#define F10_WAIT_NS (10 * NS_PER_MSEC - 150000)
+#define F10_WAIT_NS (10 * NS_PER_MSEC - 120000)
 #define F20_WAIT_NS (20 * NS_PER_MSEC - 150000)
 
 static timer_t scheduler_timer;
@@ -236,7 +236,7 @@ int main (int argc, char *argv[])
 
     printf("Starting timer\n");
     // Let it run for 5 seconds
-    sequencePeriods = 500;
+    sequencePeriods = 100;
 
     // Sequencer = RT_MAX	@ 100 Hz
     struct sigevent sev;
