@@ -131,7 +131,7 @@ void Sequencer(int id)
         itime.it_interval.tv_nsec = 0;
         itime.it_value.tv_sec = 0;
         itime.it_value.tv_nsec = 0;
-        timer_settime(timer_1, flags, &itime, &last_itime);
+        timer_settime(scheduler_timer, flags, &itime, &last_itime);
 	    printf("Disabling sequencer interval timer with abort=%d and %llu of %lld\n", abortTest, seqCnt, sequencePeriods);
 
 	    // shutdown all services
@@ -145,7 +145,7 @@ void Sequencer(int id)
 
 int main (int argc, char *argv[])
 {
-   int rc, cpuidx;
+   int rc, cpuidx, flags=0;
    int i=0;
    cpu_set_t cpuset;
 
