@@ -35,46 +35,59 @@ typedef struct
     int threadIdx;
 } threadParams_t;
 
-
+// Used to abort the test in a nominal scenario
 bool abortTest = false;
 bool abort_f10 = false, abort_f20 = false;
+
 // POSIX thread declarations and scheduling attributes
-//
 pthread_t threads[2];
 threadParams_t threadParams[2];
 pthread_attr_t threadAttrs[2];
 struct sched_param schedparams[2];
+
+// Semaphores used by scheduler to run the computation threads
 sem_t sem_f10, sem_f20;
 
 // Unsafe global
 int gsum=0;
 
+// Service S=f10, C=10, T=D=20
 void *f10(void *threadp)
 {
+    // Timespecs for tracking the invocation time of the service,
+    // runtime of the service, and stop time of the service
     struct timespec time_start, time_now;
+
+    // Used to track the number of ns the service has consumed the CPU
     uint64_t elapsed_ns = 0;
+
+    // Var for converting a timespec to a double
     double dtime;
 
     printf("f10 started\n");
     while (!abort_f10)
     {
         sem_wait(&sem_f10);
+
+        // User the raw monotonic clock for printing the timestamp to syslog
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_start);
         dtime = ((double)(time_start.tv_sec) + ((double)(time_start.tv_nsec) / 1000000000.0));
         syslog(LOG_CRIT, "[%6.9lf] f10: Task start\n", dtime);
+
         elapsed_ns = 0;
 
-        // Get the CPU time consumed by this thread to time thread consumption
-        // in case of preemption
+        // Use CLOCK_THREAD_CPUTIME_ID to get the amount of time
+        // THIS thread has been actively running.  This accounts
+        // for if the thread is preempted by anything else
         clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
         while (elapsed_ns < F10_WAIT_NS)
         {
-            // Update time
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
             elapsed_ns = (time_now.tv_sec - time_start.tv_sec) * 1000000000ULL +
             (time_now.tv_nsec - time_start.tv_nsec);
         }
 
+        // Use the raw monotonic for the final timestamp at the end of the service
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
         syslog(LOG_CRIT, "[%6.9lf] f10: Task end\n", dtime, elapsed_ns);
@@ -83,33 +96,43 @@ void *f10(void *threadp)
     pthread_exit((void *)0);
 }
 
-
+// Service S=f20, C=20, T=D=50
 void *f20(void *threadp)
 {
+    // Timespecs for tracking the invocation time of the service,
+    // runtime of the service, and stop time of the service
     struct timespec time_start, time_now;
+
+    // Used to track the number of ns the service has consumed the CPU
     uint64_t elapsed_ns = 0;
+
+    // Var for converting a timespec to a double
     double dtime;
 
     printf("f20 started\n");
     while (!abort_f20)
     {
         sem_wait(&sem_f20);
+
+        // User the raw monotonic clock for printing the timestamp to syslog
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_start);
         dtime = ((double)(time_start.tv_sec) + ((double)(time_start.tv_nsec) / 1000000000.0));
         syslog(LOG_CRIT, "[%6.9lf] f20: Task start\n", dtime);
+
         elapsed_ns = 0;
 
-        // Get the CPU time consumed by this thread to time thread consumption
-        // in case of preemption
+        // Use CLOCK_THREAD_CPUTIME_ID to get the amount of time
+        // THIS thread has been actively running.  This accounts
+        // for if the thread is preempted by anything else
         clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
         while (elapsed_ns < F20_WAIT_NS)
         {
-            // Update time
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
             elapsed_ns = (time_now.tv_sec - time_start.tv_sec) * 1000000000ULL +
             (time_now.tv_nsec - time_start.tv_nsec);
         }
 
+        // Use the raw monotonic for the final timestamp at the end of the service
         clock_gettime(CLOCK_MONOTONIC_RAW, &time_now);
         dtime = ((double)(time_now.tv_sec) + ((double)(time_now.tv_nsec) / 1000000000.0));
         syslog(LOG_CRIT, "[%6.9lf] f20: Task end\n", dtime, elapsed_ns);
@@ -118,6 +141,8 @@ void *f20(void *threadp)
     pthread_exit((void *)0);
 }
 
+// Sequencer that will be called by a timer at a rate of 100Hz.  Depending on number of
+// invocations, will release one or both of the computation threads
 void Sequencer(int id)
 {
     struct timespec current_time;
@@ -157,7 +182,7 @@ int main (int argc, char *argv[])
    int i=0;
    cpu_set_t cpuset;
 
-   // Set the scheduling policy to fifo with the maximum priority
+   // Set the scheduling policy of the main thread to fifo with the maximum priority
    struct sched_param mainParam;
    mainParam.sched_priority = sched_get_priority_max(SCHED_FIFO);
    if (0 != sched_setscheduler(0, SCHED_FIFO, &mainParam))
@@ -192,7 +217,8 @@ int main (int argc, char *argv[])
         pthread_attr_setaffinity_np(&threadAttrs[i], sizeof(cpu_set_t), &cpuset);
 
         // Select the priority for the thread.
-        // Give the inc thread a higher prio so it always goes first
+        // Give the more frequently requested thread a higher prio so it always goes first
+        // or preempts the lower prio thread
         schedparams[i].sched_priority = (i == 0) ? 80 : 70; // f10 > f20
         pthread_attr_setschedparam(&threadAttrs[i], &schedparams[i]);
 
