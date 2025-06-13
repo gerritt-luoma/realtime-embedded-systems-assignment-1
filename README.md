@@ -789,3 +789,32 @@ void *counterThread(void *threadp)
            start, stop);
 }
 ```
+
+> Download and run the examples for creation of 2 threads provided by incdecthread, as well as Linux/simplethread-affinity-fifo. Describe POSIX API functions used by reading POSIX manual pages as needed and commenting your version of this code. Note that this starter example code - testdigest.c is an example that makes use of and sem_post and sem_wait and you can use semaphores to synchronize the increment/decrement and other concurrent threading code. Try to make the increment/decrement deterministic (always in the same order). You can make thread execution deterministic two ways – by using SCHED_FIFO priorities or by using semaphores. Try both and compare methods to make the order deterministic and compare your results.
+
+Pthread functions used by the provided examples:
+- `pthread_create()`
+  - Is used to create a new pthread
+  - Takes a pointer to a `pthread_t` to act as the handle, an optional `pthread_attr_t` pointer to customize the attributes of the thread (or NULL for default), a pointer to the thread entry function which must be of type `typeof(void *(void *)) *`, and a void pointer to the arguments that will be passed to the thread
+  - The function returns 0 on success or an error code on failure with the thread being in an undefined state
+- `pthread_join()`
+  - Is used to wait for a thread to complete execution and optionally get the return code from the thread
+  - Takes the `pthread_t` handle to the thread to join and a `void **` where the exit status of the thread will be copied to if it is non-null
+- `pthread_attr_init()`
+  - Initializes a provided `pthread_attr_t` struct pointer with the default thread attribute values
+- `pthread_attr_setinheritsched()`
+  - Configures a `pthread_attr_t` with a selected shedule inheritance schedule.  The inheritance schedules can either be:
+    - `PTHREAD_INHERIT_SCHED` - The thread inherits its attributes from the calling thread and any other provided `pthread_attr_t` attributes are ignored
+    - `PTHREAD_EXPLICIT_SCHED` - The thread is created with the attributes from its provided `pthread_attr_t` attributes
+- `pthread_attr_setschedpolicy()`
+  - Is used to set the scheduling policy of a provided `pthread_attr_t` attributes struct.
+  - The common supported scheduling policy values available are `SCHED_FIFO`, `SCHED_RR`, or `SCHED_OTHER`.  In later versions of the linux kernel there are additional policies like `SCHED_DEADLINE`
+- `pthread_attr_setaffinity_np()`
+  - Is used to set the CPU affinity mask of the provided `pthread_attr_t` attributes struct.  The CPU affinity mask informs the kernel which CPU core(s) the thread can run on
+  - This function takes a pointer to a `cpu_set_t` type which can be interacted with and set using the `CPU_` macros made available after defining `_GNU_SOURCE`
+- `sched_get_priority_max()`
+  - Is used to retrieve the maximum thread priority of the selected scheduling policy
+- `sched_setscheduler()`
+  - Is used to set the sheduling policy and scheduling params of the selected PID.  If the PID is 0, the scheduling policy and params of the calling thread are set instead.
+- `pthread_attr_setschedparam()`
+  - Is used to set the scheduling attributes of the input `pthread_attr_t` using the input `struct sched_param` buffer
