@@ -8,9 +8,13 @@
 #include <linux/sched.h>
 #include <pthread.h>
 #include <stdint.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <sys/syscall.h>
+
+#define CURRENT_POLICY (SCHED_DEADLINE)
+// #define CURRENT_POLICY (SCHED_FIFO)
 
 struct sched_attr 
 {
@@ -31,10 +35,11 @@ int sched_setattr(pid_t pid, const struct sched_attr *attr, unsigned int flags)
 
 void * threadA(void *p) 
 {
+    struct timespec time_now;
     struct sched_attr attr = 
     {
         .size = sizeof (attr),
-        .sched_policy = SCHED_DEADLINE,
+        .sched_policy = CURRENT_POLICY,
         .sched_runtime = 10 * 1000 * 1000,
         .sched_period = 2 * 1000 * 1000 * 1000,
         .sched_deadline = 11 * 1000 * 1000
@@ -44,6 +49,7 @@ void * threadA(void *p)
 
     for (;;) 
     {
+        clock_gettime(CLOCK_MONOTONIC, &time_now);
         printf("Time is - please fill this in using POSIX clock_gettime\n");
         fflush(0);
         sched_yield();
