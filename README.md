@@ -887,3 +887,175 @@ Current monotonic time: 392886.246928352
 
 > D: Based upon POSIX Pthread code and examples of the use of interval timers and semaphores, please attempt to implement two services using POSIX threading that compute a sequence (synthetic load) and match the original VxWorks diagram with: S1=f10, C1=10 msec, T1=20 msec, D1=T1 and S2=f20, C1=20 mesec, T2=50 msec, D2=T2 as is diagrammed below in Figure 2 and shown with the Figure 1 VxWorks trace. You may want to review example code for help (sequencer, sequencer_generic) and look at a more complete example using an interval timer including this contributed Linux code from one of our student assistants (Example Analysis and Code for different polices – SCHED_RR, SCHED_OTHER, SCHED_FIFO). Recall that U=90%, and the two services f10 and f20 simply burn CPU cycles computing a sequence and run over the LCM of their periods – 100 msec. The trace below was based on this original VxWorks code and your code should match this schedule and timing as best you can.
 
+To accomplish this I have added a new directory to the repo named `scheduler`.  In it is the program accomplishing this task.  First, the program configures the scheduler of the process to be `SCHED_FIFO` and sets a CPU mask so that all threads will only run on CPU 3.  Then, the program spawns two pthreads, `f10` and `f20`, that both initialize and wait on semaphores till they are released by the scheduler.  The `Scheduler()` is invoked by a timer running at 100Hz and will post on the semaphores for the threads based off the number of times the scheduler has ran.  To ensure the threads are actually consuming the CPU for their expected duration of time, I have implemented a busy wait that uses the `CLOCK_THREAD_CPUTIME_ID` clock to measure the amount of true CPU time the thread has consumed since being invoked.  Both threads run for a little less than their specified C durations.  Since the majority of logging goes to the syslog, the output is fairly minimal as seen below:
+
+```bash
+f10 started
+f20 started
+Starting timer
+Disabling sequencer interval timer with abort=0 and 500 of 500
+TEST COMPLETE
+```
+
+> E: Provide a trace using syslog events and timestamps (Example syslog) and capture your trace to see if it matches VxWorks and the ideal expectation. Explain whether it does and any difference you can note.
+
+Below is a syslog trace of the program running for 5 seconds.  I believe this trace matches the given VxWorks trace because the tasks repeat a pattern of the following timeline:
+
+1. `f10` starts and runs 10ms to completion
+2. `f20` starts and runs for 10ms
+3. `f10` starts preempting `f20` and runs 10ms to completion
+4. `f20` resumes and runs for 10ms to completion
+5. `f10` starts and runs 10ms to completion
+6. `f20` starts and runs for 10ms
+7. `f10` starts preempting `f20` and runs 10ms to completion
+8. `f20` resumes and runs for 10ms to completion
+9. `f10` starts and runs 10ms to completion
+10. There is 10ms of deadtime (which would be consumed by an idle thread)
+11. Pattern repeats indefinitely
+
+```bash
+Jun 13 15:57:07 pthread[11693]: [456286.153343124] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.163422235] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.163453328] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.173295791] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.183188124] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.193233143] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.193294995] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.203186828] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.203294995] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.213292902] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.223184310] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.233061754] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.233294217] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.243185495] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.253294717] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.263186217] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.263200124] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.273293735] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.283184532] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.292964069] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.293294587] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.303185680] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.303294532] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.313293643] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.323184587] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.333061050] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.333295365] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.343188402] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.353295291] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.363185921] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.363200050] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.373294365] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.383185458] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.392963698] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.393295384] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.403186569] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.403295383] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.413294735] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.423185476] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.433069643] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.433300328] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.443192939] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.453296772] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.463188624] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.463203939] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.473296939] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.483188883] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.492968976] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.493296809] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.503189124] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.503296402] f20: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.513296643] f10: Task start
+Jun 13 15:57:07 pthread[11693]: [456286.523187939] f10: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.533063698] f20: Task end
+Jun 13 15:57:07 pthread[11693]: [456286.533297346] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.543188069] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.553297402] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.563188976] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.563202476] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.573296643] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.583188180] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.592966420] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.593297532] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.603188957] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.603297624] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.613296791] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.623188124] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.633063624] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.633297680] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.643188309] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.653298309] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.663189254] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.663204272] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.673297957] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.683188513] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.692977254] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.693302883] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.703195346] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.703298624] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.713297809] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.723188865] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.733064828] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.733298754] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.743189809] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.753299420] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.763190643] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.763204846] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.773298402] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.783189346] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.792967624] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.793299272] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.803189865] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.803299346] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.813298346] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.823189365] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.833065365] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.833299883] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.843190254] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.853304272] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.863198902] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.863214828] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.873299883] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.883190494] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.892978439] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.893301457] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.903192679] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.903300735] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.913299994] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.923191476] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.933066976] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.933319105] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.943213179] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.953304902] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.963199383] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.963215661] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.973302457] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456286.983193476] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.992980735] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456286.993302142] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.003194994] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.003302068] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.013300624] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.023191791] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.033068735] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.033302624] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.043194550] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.053301957] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.063194142] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.063208179] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.073301976] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.083193735] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.092972161] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.093303216] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.103195105] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.103302661] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.113301716] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.123192883] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.133068865] f20: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.133303753] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.143195439] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.143332920] f10: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.153231790] f10: Task end
+Jun 13 15:57:08 pthread[11693]: [456287.153686716] f20: Task start
+Jun 13 15:57:08 pthread[11693]: [456287.173563068] f20: Task end
+```

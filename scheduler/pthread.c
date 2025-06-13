@@ -235,7 +235,7 @@ int main (int argc, char *argv[])
     sleep(1);
 
     printf("Starting timer\n");
-    // Let it run for 5 seconds
+    // Let it run for 1 second
     sequencePeriods = 100;
 
     // Sequencer = RT_MAX	@ 100 Hz
