@@ -18,8 +18,8 @@
 #include <signal.h>
 
 #define NS_PER_MSEC (1000 * 1000)
-#define F10_WAIT_NS (10 * NS_PER_MSEC)
-#define F20_WAIT_NS (20 * NS_PER_MSEC)
+#define F10_WAIT_NS (10 * NS_PER_MSEC - 100000)
+#define F20_WAIT_NS (20 * NS_PER_MSEC - 100000)
 
 static timer_t scheduler_timer;
 static struct itimerspec itime = {{1,0}, {1,0}};
@@ -65,7 +65,7 @@ void *f10(void *threadp)
         // Get the CPU time consumed by this thread to time thread consumption
         // in case of preemption
         clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
-        while (elapsed_ns < (F10_WAIT_NS - 1000))
+        while (elapsed_ns < F10_WAIT_NS)
         {
             // Update time
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
@@ -100,7 +100,7 @@ void *f20(void *threadp)
         // Get the CPU time consumed by this thread to time thread consumption
         // in case of preemption
         clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_start);
-        while (elapsed_ns < (F20_WAIT_NS - 1000))
+        while (elapsed_ns < F20_WAIT_NS)
         {
             // Update time
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time_now);
@@ -118,18 +118,17 @@ void *f20(void *threadp)
 
 void Sequencer(int id)
 {
-    printf("Sequencer called\n");
     struct timespec current_time;
     double current_realtime;
     int rc, flags = 0;
-
-    seqCnt++;
 
     // Timer fires at 100 Hz, f10 period runs at 50 Hz
     if ((seqCnt % 2) == 0) sem_post(&sem_f10);
 
     // Timer fires at 100 Hz, f20 period runs at 20 Hz
     if ((seqCnt % 5) == 0) sem_post(&sem_f20);
+
+    seqCnt++;
 
     if (abortTest || (seqCnt >= sequencePeriods))
     {
@@ -204,9 +203,10 @@ int main (int argc, char *argv[])
                       );
     }
 
+    sleep(1);
     printf("Starting timer\n");
-    // Let it run for 20 seconds
-    sequencePeriods = 2000;
+    // Let it run for 5 seconds
+    sequencePeriods = 500;
     // Sequencer = RT_MAX	@ 100 Hz
     //
     struct sigevent sev;
