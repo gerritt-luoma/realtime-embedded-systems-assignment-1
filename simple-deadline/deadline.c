@@ -36,6 +36,7 @@ int sched_setattr(pid_t pid, const struct sched_attr *attr, unsigned int flags)
 void * threadA(void *p) 
 {
     struct timespec time_now;
+    double dtime;
     struct sched_attr attr = 
     {
         .size = sizeof (attr),
@@ -50,7 +51,8 @@ void * threadA(void *p)
     for (;;) 
     {
         clock_gettime(CLOCK_MONOTONIC, &time_now);
-        printf("Time is - please fill this in using POSIX clock_gettime\n");
+        dtime = ((double)(time_now->tv_sec) + ((double)(time_now->tv_nsec) / 1000000000.0));
+        printf("Current monotonic time: %6.9lf\n", dtime);
         fflush(0);
         sched_yield();
     };
